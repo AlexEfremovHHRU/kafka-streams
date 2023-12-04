@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: kafka-client-server
+  datasource:
+    url: jdbc:postgresql://localhost:5432/kafka-client-server
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  data:
+    redis:
+      port: 6379
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27017/mongo?authSource=admin
+
+server:
+  port: 8000
+
+logging:
+  level:
+    root: ${LOGGING_LEVEL:info}
+    org.springframework.amqp: info
+
+spring.cloud:
+  function:
+    definition: userDtoConsumer # if you use consumer or function or supplier interface
+  stream:
+    kafka:
+      bindings:  # in - consumer out - supplier
+        userDtoConsumer-in-0:
+          destination: users-topic
+          group: group-1 # use group for save offset
+        userSupplier-out-0:
+          destination: users-topic
+          group: group-1
+          producer:
+            partitionKeyExpression:  headers['partitionKey']
+             # if you want created a new topic and divide topic by partition  ,when you started service
+            partitionCount: 3
+      streams:
+        # if needed to be created a new topic when started service
+        binder:
+          auto-create-topics: off
+          brokers:
+            - localhost:9091
+            - localhost:9092 # if you use replication
